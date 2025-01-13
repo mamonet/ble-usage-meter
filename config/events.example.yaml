@@ -1,0 +1,60 @@
+# config/events.example.yaml
+#
+# Event mapping: which observed GATT write counts as one unit of work.
+# Loaded by gateway/config.py:load_events().
+#
+# EVERY UUID AND PREFIX BELOW IS A MADE-UP PLACEHOLDER. None of these were observed on any
+# device. They exist to show the shape of the file. You discover the real values for YOUR
+# OWN hardware by following docs/protocol-discovery.md, then replace them here.
+#
+# Copy to config/events.yaml before use.
+
+# Optional. Restrict matching to one peripheral so a neighbouring device on the same bench
+# cannot contribute to your count. Placeholder address.
+peripheral:
+  address: "AA:BB:CC:DD:EE:FF"      # <placeholder> BD_ADDR of your own appliance
+  address_type: public              # public | random
+
+events:
+  # Each rule maps (service, characteristic, optional payload prefix) -> an event name.
+  # Matching is exact. A write matching no rule is logged as unknown and is NEVER guessed
+  # into a count. Two rules on the same (service, characteristic, prefix) triple are
+  # rejected at load time, so rule order can never change the count.
+
+  - event: work_unit                # the event that increments the billable counter
+
+    # Service UUID the characteristic lives under. Full 128-bit form, or a 16-bit
+    # shorthand like "fff0" which is expanded into the Bluetooth base UUID before
+    # comparison so there is exactly one representation.
+    service: "0000fff0-0000-1000-8000-00805f9b34fb"        # <placeholder>
+
+    # Characteristic the app writes to when it commands one unit of work.
+    characteristic: "0000fff1-0000-1000-8000-00805f9b34fb" # <placeholder>
+
+    # Payload prefix, hex, compared as raw bytes against the start of the reassembled ATT
+    # value. Empty or omitted means "any write to this characteristic counts". Make the
+    # prefix as long as it needs to be to be unambiguous: too short and a status poll or a
+    # keepalive on the same characteristic will inflate your count.
+    prefix: "a001"                  # <placeholder> opcode bytes
+
+  # A second rule, showing an event you want in the log but not in the bill.
+  - event: cycle_aborted
+    service: "0000fff0-0000-1000-8000-00805f9b34fb"        # <placeholder>
+    characteristic: "0000fff1-0000-1000-8000-00805f9b34fb" # <placeholder>
+    prefix: "a0ff"                  # <placeholder>
+
+  # A rule with no prefix: every write to this characteristic matches.
+  - event: session_start
+    service: "0000fff0-0000-1000-8000-00805f9b34fb"        # <placeholder>
+    characteristic: "0000fff2-0000-1000-8000-00805f9b34fb" # <placeholder>
+    prefix: ""
+
+# Which event names increment the billable counter. Anything not listed is recorded in the
+# append-only log but does not move the count.
+counted_events:
+  - work_unit
+
+# Debounce. If the app retries a write, two identical writes can arrive back to back for
+# one physical action. Set this to the shortest real gap between two genuine cycles on your
+# device; 0 disables it. Too high and you undercount a fast operator, so measure first.
+debounce_ms: 0
