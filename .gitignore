@@ -1,0 +1,47 @@
+# .gitignore
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# Databases: counters, event logs, accepted reports. Local state, never source.
+*.db
+*.sqlite3
+*.db-wal
+*.db-shm
+
+# Build output
+build/
+dist/
+sdkconfig
+sdkconfig.old
+
+# Local config copied from the .example files. These carry real device addresses and paths.
+config/events.yaml
+config/gateway.yaml
+
+# ---------------------------------------------------------------------------
+# PRIVATE KEYS MUST NEVER BE COMMITTED.
+#
+# A gateway's Ed25519 private key is the only thing that makes its usage reports
+# trustworthy. Once it is in git history it is compromised for good: anyone with a clone
+# can sign any count they like as that gateway, and rewriting history does not un-leak it.
+# The only fix is to rotate the key on the device and re-register the new public key.
+#
+# Keep keys outside the working tree entirely (tools/keygen.py refuses to write one inside
+# a git tree without --force). These patterns are a backstop, not the control.
+# ---------------------------------------------------------------------------
+*.pem
+*.key
+*.p8
+id_ed25519*
+secrets/
+
+# Captures may contain traffic from your own devices; review before sharing.
+*.log
+*.pcap
+*.pcapng
+btsnoop_hci*
